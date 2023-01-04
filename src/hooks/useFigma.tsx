@@ -69,7 +69,6 @@ const useFigma = (fileKey: string) => {
             };
         }
 
-        console.log(node.type)
         if (vectorTypes.indexOf(node.type) >= 0) {
             node.type = 'VECTOR';
             vectorMap[node.id] = node;
@@ -94,15 +93,53 @@ const useFigma = (fileKey: string) => {
 
             let html = '';
             let vector: any;
-            for (const child of canvas.children) {
+            for (let i = 0; i < canvas.children.length; i++) {
+                const child = canvas.children[i]
                 if (child.name.charAt(0) === '#' && child.visible !== false) {
-                    preprocessTree(child)
+                    const child = canvas.children[i];
+                    preprocessTree(child);
                 }
             }
 
-            // let guids = vector.vectorList.join(',');
+            let images: any;
 
-            console.log(vectorList)
+            if (vectorList.length > 0) {
+                let guids = vectorList.join(',');
+                const imageJSON: any = await api.get(`/v1/images/${fileKey}?ids=${guids}&format=svg`);
+                images = imageJSON.data.images || {};
+            }
+
+            if (images) {
+                let promises = [];
+                let guids = [];
+                for (const guid in images) {
+                    if (images[guid] == null) continue;
+                    guids.push(guid);
+                    promises.push(axios.get(images[guid]));
+                }
+
+                let responses: any = await Promise.all(promises);
+                promises = [];
+                for (const resp of responses) {
+                    promises.push(resp.text());
+                }
+
+                responses = await Promise.all(promises);
+                for (let i = 0; i < responses.length; i++) {
+                    images[guids[i]] = responses[i].replace('<svg ', '<svg preserveAspectRatio="none" ');
+                }
+            }
+
+            const componentMap: any = {}
+            for (const child of canvas.children) {
+                if (child.name.charAt(0) === '#' && child.visible !== false) {
+                    html = figma.createComponent(child, images, componentMap)
+                }
+            }
+
+            setLoading(false)
+            setData(componentMap)
+            return componentMap;
 
         } catch (err: any) {
             console.error(err)

@@ -13,7 +13,15 @@ function App () {
 
     return (
         <div>
-            <button onClick={handleClick}>Get Component</button>
+            <button onClick={handleClick}>{figma.loading ? 'Loading...' : 'Get Component'}</button>
+
+            {!figma.loading && figma.data &&
+                Object.keys(figma.data).map((key) => {
+                    return (
+                        <div key={key} dangerouslySetInnerHTML={{ __html: figma.data[key].doc }}></div>
+                    )
+                })
+            }
         </div>
     )
 }

@@ -105,31 +105,31 @@ const createComponent = (component, imgMap, componentMap) => {
     const instance = name + component.id.replace(';', 'S').replace(':', 'D');
 
     let doc = '';
-    print(`class ${instance} extends PureComponent {`, '');
-    print(`  render() {`, '');
-    print(`    return (`, '');
+    // print(`class ${instance} extends PureComponent {`, '');
+    // print(`  render() {`, '');
+    // print(`    return (`, '');
 
     const path = `src/components/${name}.js`;
 
-    if (!fs.existsSync(path)) {
-        const componentSrc = `import React, { PureComponent } from 'react';
-                import { getComponentFromId } from '../figmaComponents';
-
-                export class ${name} extends PureComponent {
-                  state = {};
-                
-                  render() {
-                    const Component = getComponentFromId(this.props.nodeId);
-                    return <Component {...this.props} {...this.state} />;
-                  }
-                }
-                `;
-
-        fs.writeFile(path, componentSrc, function (err) {
-            if (err) console.log(err);
-            console.log(`wrote ${path}`);
-        });
-    }
+    // if (!fs.existsSync(path)) {
+    //     const componentSrc = `import React, { PureComponent } from 'react';
+    //             import { getComponentFromId } from '../figmaComponents';
+    //
+    //             export class ${name} extends PureComponent {
+    //               state = {};
+    //
+    //               render() {
+    //                 const Component = getComponentFromId(this.props.nodeId);
+    //                 return <Component {...this.props} {...this.state} />;
+    //               }
+    //             }
+    //             `;
+    //
+    //     fs.writeFile(path, componentSrc, function (err) {
+    //         if (err) console.log(err);
+    //         console.log(`wrote ${path}`);
+    //     });
+    // }
 
     function print(msg, indent) {
         doc += `${indent}${msg}\n`;
@@ -424,9 +424,9 @@ const createComponent = (component, imgMap, componentMap) => {
     }
 
     visitNode(component, null, null, '  ');
-    print('    );', '');
-    print('  }', '');
-    print('}', '');
+    // print('    );', '');
+    // print('  }', '');
+    // print('}', '');
     componentMap[component.id] = {instance, name, doc};
     return componentMap
 }
