@@ -85,7 +85,7 @@ const useFigma = (fileKey: string) => {
 
     const run = async () => {
         try {
-
+            setLoading(true)
             const response: any = await api.get(`/v1/files/${fileKey}`)
 
             const doc = response.data.document;
@@ -137,8 +137,8 @@ const useFigma = (fileKey: string) => {
                 }
             }
 
-            setLoading(false)
             setData(componentMap)
+            setLoading(false)
             return componentMap;
 
         } catch (err: any) {
@@ -146,7 +146,7 @@ const useFigma = (fileKey: string) => {
         }
     }
 
-    return { run, data }
+    return { run, data, loading }
 }
 
 
