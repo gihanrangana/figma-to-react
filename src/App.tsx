@@ -1,5 +1,10 @@
+import ReactHtmlParser from "react-html-parser"
+import * as ReactDOMServer from 'react-dom/server';
 import useFigma from "./hooks/useFigma";
-import { useEffect } from "react";
+import Component from "./Component";
+import React from "react";
+import ReactDOM from "react-dom/client";
+import JsxParser from "react-jsx-parser";
 
 function App () {
 
@@ -17,8 +22,15 @@ function App () {
 
             {!figma.loading && figma.data &&
                 Object.keys(figma.data).map((key) => {
+
+                    // const Com = ReactDOM.createClass()
+
                     return (
-                        <div key={key} dangerouslySetInnerHTML={{ __html: figma.data[key].doc }}></div>
+                        // <div key={key} dangerouslySetInnerHTML={{__html:figma.data[key].doc}}></div>
+                        <div key={key}>
+                            {/* @ts-ignore */}
+                            <JsxParser jsx={figma.data[key].doc}/>
+                        </div>
                     )
                 })
             }

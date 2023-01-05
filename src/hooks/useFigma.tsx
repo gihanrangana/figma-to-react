@@ -1,7 +1,6 @@
 import axios from "axios";
 import { useState } from "react";
-// @ts-ignore
-import * as figma from "../lib/figma";
+import * as Figma from "../lib/Figma";
 
 const vectorTypes: any = ['VECTOR', 'LINE', 'REGULAR_POLYGON', 'ELLIPSE', 'STAR'];
 
@@ -133,7 +132,7 @@ const useFigma = (fileKey: string) => {
             const componentMap: any = {}
             for (const child of canvas.children) {
                 if (child.name.charAt(0) === '#' && child.visible !== false) {
-                    html = figma.createComponent(child, images, componentMap)
+                    Figma.createComponent(child, images, componentMap, fileKey)
                 }
             }
 

@@ -1,78 +1,16 @@
-import * as fs from 'fs';
+import { backgroundSize, colorString, dropShadow, getPaint, imageURL, innerShadow, nodeSort, paintToLinearGradient, paintToRadialGradient } from "./helpers";
 
-const VECTOR_TYPES = ['VECTOR', 'LINE', 'REGULAR_POLYGON', 'ELLIPSE'];
 const GROUP_TYPES = ['GROUP', 'BOOLEAN_OPERATION'];
-
-function colorString(color) {
-    return `rgba(${Math.round(color.r * 255)}, ${Math.round(color.g * 255)}, ${Math.round(color.b * 255)}, ${color.a})`;
-}
-
-function dropShadow(effect) {
-    return `${effect.offset.x}px ${effect.offset.y}px ${effect.radius}px ${colorString(effect.color)}`;
-}
-
-function innerShadow(effect) {
-    return `inset ${effect.offset.x}px ${effect.offset.y}px ${effect.radius}px ${colorString(effect.color)}`;
-}
-
-function imageURL(hash) {
-    const squash = hash.split('-').join('');
-    return `url(https://s3-us-west-2.amazonaws.com/figma-alpha/img/${squash.substring(0, 4)}/${squash.substring(4, 8)}/${squash.substring(8)})`;
-}
-
-function backgroundSize(scaleMode) {
-    if (scaleMode === 'FILL') {
-        return 'cover';
-    }
-}
-
-function nodeSort(a, b) {
-    if (a.absoluteBoundingBox.y < b.absoluteBoundingBox.y) return -1;
-    else if (a.absoluteBoundingBox.y === b.absoluteBoundingBox.y) return 0;
-    else return 1;
-}
-
-function getPaint(paintList) {
-    if (paintList && paintList.length > 0) {
-        return paintList[paintList.length - 1];
-    }
-
-    return null;
-}
-
-function paintToLinearGradient(paint) {
-    const handles = paint.gradientHandlePositions;
-    const handle0 = handles[0];
-    const handle1 = handles[1];
-
-    const ydiff = handle1.y - handle0.y;
-    const xdiff = handle0.x - handle1.x;
-
-    const angle = Math.atan2(-xdiff, -ydiff);
-    const stops = paint.gradientStops.map((stop) => {
-        return `${colorString(stop.color)} ${Math.round(stop.position * 100)}%`;
-    }).join(', ');
-    return `linear-gradient(${angle}rad, ${stops})`;
-}
-
-function paintToRadialGradient(paint) {
-    const stops = paint.gradientStops.map((stop) => {
-        return `${colorString(stop.color)} ${Math.round(stop.position * 60)}%`;
-    }).join(', ');
-
-    return `radial-gradient(${stops})`;
-}
-
-function expandChildren(node, parent, minChildren, maxChildren, centerChildren, offset) {
-    const children = node.children;
-    let added = offset;
+const expandChildren = (node: any, parent: any, minChildren: any, maxChildren: any, centerChildren: any, offset: any) => {
+    const children = node.children
+    let added = offset
 
     if (children) {
         for (let i = 0; i < children.length; i++) {
             const child = children[i];
 
-            if (parent != null && (node.type === 'COMPONENT' || node.type === 'INSTANCE')) {
-                child.constraints = {vertical: 'TOP_BOTTOM', horizontal: 'LEFT_RIGHT'};
+            if (parent !== null && (node.type === 'COMPONENT' || node.type === 'INSTANCE')) {
+                child.constraints = { vertical: "TOP_BOTTOM", horizontal: "LEFT_RIGHT" }
             }
 
             if (GROUP_TYPES.indexOf(child.type) >= 0) {
@@ -99,54 +37,30 @@ function expandChildren(node, parent, minChildren, maxChildren, centerChildren, 
 
     return added - offset;
 }
-
-const createComponent = (component, imgMap, componentMap) => {
+export const createComponent = (component: any, imgMap: any, componentMap: any, fileKey?: string | null) => {
+    console.log(`createComponent`, component)
     const name = 'C' + component.name.replace(/\W+/g, '');
     const instance = name + component.id.replace(';', 'S').replace(':', 'D');
 
     let doc = '';
-    // print(`class ${instance} extends PureComponent {`, '');
-    // print(`  render() {`, '');
-    // print(`    return (`, '');
 
-    const path = `src/components/${name}.js`;
-
-    // if (!fs.existsSync(path)) {
-    //     const componentSrc = `import React, { PureComponent } from 'react';
-    //             import { getComponentFromId } from '../figmaComponents';
-    //
-    //             export class ${name} extends PureComponent {
-    //               state = {};
-    //
-    //               render() {
-    //                 const Component = getComponentFromId(this.props.nodeId);
-    //                 return <Component {...this.props} {...this.state} />;
-    //               }
-    //             }
-    //             `;
-    //
-    //     fs.writeFile(path, componentSrc, function (err) {
-    //         if (err) console.log(err);
-    //         console.log(`wrote ${path}`);
-    //     });
-    // }
-
-    function print(msg, indent) {
+    const print = (indent: any, msg: any) => {
         doc += `${indent}${msg}\n`;
     }
 
-    const visitNode = (node, parent, lastVertical, indent) => {
-        let content = null;
-        let img = null;
-        const styles = {};
-        let minChildren = [];
-        const maxChildren = [];
-        const centerChildren = [];
-        let bounds = null;
-        let nodeBounds = null;
+    const visitNode = async (node: any, parent: any, lastVertical: any, indent: any) => {
+        console.log('visitNode', indent, node, parent, lastVertical)
 
-        if (parent != null) {
-            nodeBounds = node.absoluteBoundingBox;
+        let content: any = ''
+        const styles: any = {}
+        let minChildren: any = []
+        const maxChildren: any = []
+        const centerChildren: any = []
+        let bounds = null
+        let nodeBounds = null
+
+        if (parent !== null) {
+            nodeBounds = parent.absoluteBoundingBox
             const nx2 = nodeBounds.x + nodeBounds.width;
             const ny2 = nodeBounds.y + nodeBounds.height;
             const parentBounds = parent.absoluteBoundingBox;
@@ -169,7 +83,7 @@ const createComponent = (component, imgMap, componentMap) => {
         let innerClass = 'innerDiv';
         const cHorizontal = node.constraints && node.constraints.horizontal;
         const cVertical = node.constraints && node.constraints.vertical;
-        const outerStyle = {};
+        const outerStyle: any = {};
 
         if (node.order) {
             outerStyle.zIndex = node.order;
@@ -248,7 +162,7 @@ const createComponent = (component, imgMap, componentMap) => {
                         styles.backgroundColor = colorString(lastFill.color);
                         styles.opacity = lastFill.opacity;
                     } else if (lastFill.type === 'IMAGE') {
-                        styles.backgroundImage = imageURL(lastFill.imageRef);
+                        styles.backgroundImage = await imageURL(lastFill.imageRef, node.id, fileKey);
                         styles.backgroundSize = backgroundSize(lastFill.scaleMode);
                     } else if (lastFill.type === 'GRADIENT_LINEAR') {
                         styles.background = paintToLinearGradient(lastFill);
@@ -297,7 +211,7 @@ const createComponent = (component, imgMap, componentMap) => {
 
             const fontStyle = node.style;
 
-            const applyFontStyle = (_styles, fontStyle) => {
+            const applyFontStyle = (_styles: any, fontStyle: any) => {
                 if (fontStyle) {
                     _styles.fontSize = fontStyle.fontSize;
                     _styles.fontWeight = fontStyle.fontWeight;
@@ -315,10 +229,10 @@ const createComponent = (component, imgMap, componentMap) => {
             } else if (node.characterStyleOverrides) {
                 let para = '';
                 const ps = [];
-                const styleCache = {};
+                const styleCache: any = {};
                 let currStyle = 0;
 
-                const commitParagraph = (key) => {
+                const commitParagraph = (key: any) => {
                     if (para !== '') {
                         if (styleCache[currStyle] == null && currStyle !== 0) {
                             styleCache[currStyle] = {};
@@ -353,11 +267,11 @@ const createComponent = (component, imgMap, componentMap) => {
 
                 content = ps;
             } else {
-                content = node.characters.split("\n").map((line, idx) => `<div key="${idx}">${line}</div>`);
+                content = node.characters.split("\n").map((line: any, idx: any) => `<div key="${idx}">${line}</div>`);
             }
         }
 
-        function printDiv(styles, outerStyle, indent) {
+        function printDiv (styles: any, outerStyle: any, indent: any) {
             print(`<div style={${JSON.stringify(outerStyle)}} className="${outerClass}">`, indent);
             print(`  <div`, indent);
             print(`    id="${node.id}"`, indent);
@@ -372,7 +286,7 @@ const createComponent = (component, imgMap, componentMap) => {
 
         if (node.id !== component.id && node.name.charAt(0) === '#') {
             print(`    <C${node.name.replace(/\W+/g, '')} {...this.props} nodeId="${node.id}" />`, indent);
-            createComponent(node, imgMap, componentMap);
+            createComponent(node, imgMap, componentMap, fileKey);
         } else if (node.type === 'VECTOR') {
             print(`    <div className="vector" dangerouslySetInnerHTML={{__html: \`${imgMap[node.id]}\`}} />`, indent);
         } else {
@@ -416,19 +330,13 @@ const createComponent = (component, imgMap, componentMap) => {
             }
             print(`    </div>`, indent);
         }
-
         if (parent != null) {
             print(`  </div>`, indent);
             print(`</div>`, indent);
         }
+
+        componentMap[component.id] = { instance, name, doc };
     }
 
     visitNode(component, null, null, '  ');
-    // print('    );', '');
-    // print('  }', '');
-    // print('}', '');
-    componentMap[component.id] = {instance, name, doc};
-    return componentMap
 }
-
-export {createComponent, colorString}
