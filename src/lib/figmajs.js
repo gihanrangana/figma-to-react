@@ -3,8 +3,30 @@ import * as fs from 'fs';
 const VECTOR_TYPES = ['VECTOR', 'LINE', 'REGULAR_POLYGON', 'ELLIPSE'];
 const GROUP_TYPES = ['GROUP', 'BOOLEAN_OPERATION'];
 
+function rgba2hex (orig) {
+    let a, isPercent,
+        rgb = orig.replace(/\s/g, '').match(/^rgba?\((\d+),(\d+),(\d+),?([^,\s)]+)?/i),
+        alpha = (rgb && rgb[4] || "").trim(),
+        hex = rgb ?
+            (rgb[1] | 1 << 8).toString(16).slice(1) +
+            (rgb[2] | 1 << 8).toString(16).slice(1) +
+            (rgb[3] | 1 << 8).toString(16).slice(1) : orig;
+
+    if (alpha !== "") {
+        a = alpha;
+    } else {
+        a = 0o1;
+    }
+    // multiply before convert to HEX
+    a = ((a * 255) | 1 << 8).toString(16).slice(1)
+    hex = hex + a;
+
+    return hex;
+}
 function colorString(color) {
-    return `rgba(${Math.round(color.r * 255)}, ${Math.round(color.g * 255)}, ${Math.round(color.b * 255)}, ${color.a})`;
+    // return `rgba(${Math.round(color.r * 255)}, ${Math.round(color.g * 255)}, ${Math.round(color.b * 255)}, ${color.a})`;
+    const rgba = `rgba(${Math.round(color.r * 255)}, ${Math.round(color.g * 255)}, ${Math.round(color.b * 255)}, ${color.a})`
+    return `#${rgba2hex(rgba)}`;
 }
 
 function dropShadow(effect) {

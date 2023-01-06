@@ -37,30 +37,27 @@ const expandChildren = (node: any, parent: any, minChildren: any, maxChildren: a
 
     return added - offset;
 }
-export const createComponent = (component: any, imgMap: any, componentMap: any, fileKey?: string | null) => {
-    console.log(`createComponent`, component)
+
+export const createComponent = async (component: any, imgMap: any, componentMap: any, fileKey: any) => {
     const name = 'C' + component.name.replace(/\W+/g, '');
     const instance = name + component.id.replace(';', 'S').replace(':', 'D');
-
     let doc = '';
-
-    const print = (indent: any, msg: any) => {
+    function print (msg: any, indent: any) {
         doc += `${indent}${msg}\n`;
     }
 
     const visitNode = async (node: any, parent: any, lastVertical: any, indent: any) => {
-        console.log('visitNode', indent, node, parent, lastVertical)
+        let content = null;
+        let img = null;
+        const styles: any = {};
+        let minChildren: any = [];
+        const maxChildren: any = [];
+        const centerChildren: any = [];
+        let bounds = null;
+        let nodeBounds = null;
 
-        let content: any = ''
-        const styles: any = {}
-        let minChildren: any = []
-        const maxChildren: any = []
-        const centerChildren: any = []
-        let bounds = null
-        let nodeBounds = null
-
-        if (parent !== null) {
-            nodeBounds = parent.absoluteBoundingBox
+        if (parent != null) {
+            nodeBounds = node.absoluteBoundingBox;
             const nx2 = nodeBounds.x + nodeBounds.width;
             const ny2 = nodeBounds.y + nodeBounds.height;
             const parentBounds = parent.absoluteBoundingBox;
@@ -147,7 +144,7 @@ export const createComponent = (component: any, imgMap: any, componentMap: any, 
                 styles.marginTop = bounds.top;
                 styles.marginBottom = bounds.bottom;
                 styles.minHeight = styles.height;
-                styles.height = null;
+                styles.height = 'auto';
             }
         }
 
@@ -193,8 +190,15 @@ export const createComponent = (component: any, imgMap: any, componentMap: any, 
                 }
 
                 const cornerRadii = node.rectangleCornerRadii;
-                if (cornerRadii && cornerRadii.length === 4 && cornerRadii[0] + cornerRadii[1] + cornerRadii[2] + cornerRadii[3] > 0) {
-                    styles.borderRadius = `${cornerRadii[0]}px ${cornerRadii[1]}px ${cornerRadii[2]}px ${cornerRadii[3]}px`;
+                if (cornerRadii && cornerRadii.length === 4) {
+                    styles.borderTopLeftRadius = `${cornerRadii[0]}px`
+                    styles.borderTopRightRadius = `${cornerRadii[1]}px`
+                    styles.borderBottomRightRadius = `${cornerRadii[2]}px`
+                    styles.borderBottomLeftRadius = `${cornerRadii[3]}px`
+                }
+
+                if(node.cornerRadius){
+                    styles.borderRadius = `${node.cornerRadius}px`
                 }
             }
         } else if (node.type === 'TEXT') {
@@ -272,10 +276,13 @@ export const createComponent = (component: any, imgMap: any, componentMap: any, 
         }
 
         function printDiv (styles: any, outerStyle: any, indent: any) {
+
+            let styleString = JSON.stringify(styles)
+
             print(`<div style={${JSON.stringify(outerStyle)}} className="${outerClass}">`, indent);
             print(`  <div`, indent);
             print(`    id="${node.id}"`, indent);
-            print(`    style={${JSON.stringify(styles)}}`, indent);
+            print(`    style={${styleString}}`, indent);
             print(`    className="${innerClass}"`, indent);
             print(`  >`, indent);
         }
@@ -286,19 +293,19 @@ export const createComponent = (component: any, imgMap: any, componentMap: any, 
 
         if (node.id !== component.id && node.name.charAt(0) === '#') {
             print(`    <C${node.name.replace(/\W+/g, '')} {...this.props} nodeId="${node.id}" />`, indent);
-            createComponent(node, imgMap, componentMap, fileKey);
+            await createComponent(node, imgMap, componentMap, fileKey);
         } else if (node.type === 'VECTOR') {
             print(`    <div className="vector" dangerouslySetInnerHTML={{__html: \`${imgMap[node.id]}\`}} />`, indent);
         } else {
             const newNodeBounds = node.absoluteBoundingBox;
             const newLastVertical = newNodeBounds && newNodeBounds.y + newNodeBounds.height;
-            print(`    <div>`, indent);
+            print(`    <div id="test">`, indent);
             let first = true;
             for (const child of minChildren) {
-                visitNode(child, node, first ? null : newLastVertical, indent + '      ');
+                await visitNode(child, node, first ? null : newLastVertical, indent + '      ');
                 first = false;
             }
-            for (const child of centerChildren) visitNode(child, node, null, indent + '      ');
+            for (const child of centerChildren) await visitNode(child, node, null, indent + '      ');
             if (maxChildren.length > 0) {
                 outerClass += ' maxer';
                 styles.width = '100%';
@@ -307,7 +314,7 @@ export const createComponent = (component: any, imgMap: any, componentMap: any, 
                 printDiv(styles, outerStyle, indent + '      ');
                 first = true;
                 for (const child of maxChildren) {
-                    visitNode(child, node, first ? null : newLastVertical, indent + '          ');
+                    await visitNode(child, node, first ? null : newLastVertical, indent + '          ');
                     first = false;
                 }
                 print(`        </div>`, indent);
@@ -330,13 +337,318 @@ export const createComponent = (component: any, imgMap: any, componentMap: any, 
             }
             print(`    </div>`, indent);
         }
+
         if (parent != null) {
             print(`  </div>`, indent);
             print(`</div>`, indent);
         }
-
-        componentMap[component.id] = { instance, name, doc };
     }
 
-    visitNode(component, null, null, '  ');
+    await visitNode(component, null, null, '  ');
+
+    componentMap[component.id] = { instance, name, doc };
+    return componentMap
 }
+
+// export const createComponent = async (component: any, imgMap: any, componentMap: any, fileKey?: string | null) => {
+//     const name = 'C' + component.name.replace(/\W+/g, '');
+//     const instance = name + component.id.replace(';', 'S').replace(':', 'D');
+//
+//     let doc = '';
+//
+//     const print = (indent: any, msg: any) => {
+//         doc += `${indent}${msg}\n`;
+//     }
+//
+//     const visitNode = async (node: any, parent: any, lastVertical: any, indent: any) => {
+//
+//         let content: any = ''
+//         const styles: any = {}
+//         let minChildren: any = []
+//         const maxChildren: any = []
+//         const centerChildren: any = []
+//         let bounds = null
+//         let nodeBounds = null
+//
+//         if (parent !== null) {
+//             nodeBounds = parent.absoluteBoundingBox
+//             const nx2 = nodeBounds.x + nodeBounds.width;
+//             const ny2 = nodeBounds.y + nodeBounds.height;
+//             const parentBounds = parent.absoluteBoundingBox;
+//             const px = parentBounds.x;
+//             const py = parentBounds.y;
+//
+//             bounds = {
+//                 left: nodeBounds.x - px,
+//                 right: px + parentBounds.width - nx2,
+//                 top: lastVertical == null ? nodeBounds.y - py : nodeBounds.y - lastVertical,
+//                 bottom: py + parentBounds.height - ny2,
+//                 width: nodeBounds.width,
+//                 height: nodeBounds.height,
+//             }
+//         }
+//
+//         expandChildren(node, parent, minChildren, maxChildren, centerChildren, 0);
+//
+//         let outerClass = 'outerDiv';
+//         let innerClass = 'innerDiv';
+//         const cHorizontal = node.constraints && node.constraints.horizontal;
+//         const cVertical = node.constraints && node.constraints.vertical;
+//         const outerStyle: any = {};
+//
+//         if (node.order) {
+//             outerStyle.zIndex = node.order;
+//         }
+//
+//         if (cHorizontal === 'LEFT_RIGHT') {
+//             if (bounds != null) {
+//                 styles.marginLeft = bounds.left;
+//                 styles.marginRight = bounds.right;
+//                 styles.flexGrow = 1;
+//             }
+//         } else if (cHorizontal === 'RIGHT') {
+//             outerStyle.justifyContent = 'flex-end';
+//             if (bounds != null) {
+//                 styles.marginRight = bounds.right;
+//                 styles.width = bounds.width;
+//                 styles.minWidth = bounds.width;
+//             }
+//         } else if (cHorizontal === 'CENTER') {
+//             outerStyle.justifyContent = 'center';
+//             if (bounds != null) {
+//                 styles.width = bounds.width;
+//                 styles.marginLeft = bounds.left && bounds.right ? bounds.left - bounds.right : null;
+//             }
+//         } else if (cHorizontal === 'SCALE') {
+//             if (bounds != null) {
+//                 const parentWidth = bounds.left + bounds.width + bounds.right;
+//                 styles.width = `${bounds.width * 100 / parentWidth}%`;
+//                 styles.marginLeft = `${bounds.left * 100 / parentWidth}%`;
+//             }
+//         } else {
+//             if (bounds != null) {
+//                 styles.marginLeft = bounds.left;
+//                 styles.width = bounds.width;
+//                 styles.minWidth = bounds.width;
+//             }
+//         }
+//
+//         if (bounds && bounds.height && cVertical !== 'TOP_BOTTOM') styles.height = bounds.height;
+//         if (cVertical === 'TOP_BOTTOM') {
+//             outerClass += ' centerer';
+//             if (bounds != null) {
+//                 styles.marginTop = bounds.top;
+//                 styles.marginBottom = bounds.bottom;
+//             }
+//         } else if (cVertical === 'CENTER') {
+//             outerClass += ' centerer';
+//             outerStyle.alignItems = 'center';
+//             if (bounds != null) {
+//                 styles.marginTop = bounds.top - bounds.bottom;
+//             }
+//         } else if (cVertical === 'SCALE') {
+//             outerClass += ' centerer';
+//             if (bounds != null) {
+//                 const parentHeight = bounds.top + bounds.height + bounds.bottom;
+//                 styles.height = `${bounds.height * 100 / parentHeight}%`;
+//                 styles.top = `${bounds.top * 100 / parentHeight}%`;
+//             }
+//         } else {
+//             if (bounds != null) {
+//                 styles.marginTop = bounds.top;
+//                 styles.marginBottom = bounds.bottom;
+//                 styles.minHeight = styles.height;
+//                 styles.height = null;
+//             }
+//         }
+//
+//         if (['FRAME', 'RECTANGLE', 'INSTANCE', 'COMPONENT'].indexOf(node.type) >= 0) {
+//             if (['FRAME', 'COMPONENT', 'INSTANCE'].indexOf(node.type) >= 0) {
+//                 styles.backgroundColor = colorString(node.backgroundColor);
+//                 if (node.clipsContent) styles.overflow = 'hidden';
+//             } else if (node.type === 'RECTANGLE') {
+//                 // const bgImage = await imageURL(node.fills.imageRef, node.id, fileKey);
+//                 const lastFill = getPaint(node.fills);
+//                 if (lastFill) {
+//                     if (lastFill.type === 'SOLID') {
+//                         styles.backgroundColor = colorString(lastFill.color);
+//                         styles.opacity = lastFill.opacity;
+//                     } else if (lastFill.type === 'IMAGE') {
+//                         styles.backgroundImage = `url('')`;
+//                         styles.backgroundSize = backgroundSize(lastFill.scaleMode);
+//                     } else if (lastFill.type === 'GRADIENT_LINEAR') {
+//                         styles.background = paintToLinearGradient(lastFill);
+//                     } else if (lastFill.type === 'GRADIENT_RADIAL') {
+//                         styles.background = paintToRadialGradient(lastFill);
+//                     }
+//                 }
+//
+//                 if (node.effects) {
+//                     for (let i = 0; i < node.effects.length; i++) {
+//                         const effect = node.effects[i];
+//                         if (effect.type === 'DROP_SHADOW') {
+//                             styles.boxShadow = dropShadow(effect);
+//                         } else if (effect.type === 'INNER_SHADOW') {
+//                             styles.boxShadow = innerShadow(effect);
+//                         } else if (effect.type === 'LAYER_BLUR') {
+//                             styles.filter = `blur(${effect.radius}px)`;
+//                         }
+//                     }
+//                 }
+//
+//                 const lastStroke = getPaint(node.strokes);
+//                 if (lastStroke) {
+//                     if (lastStroke.type === 'SOLID') {
+//                         const weight = node.strokeWeight || 1;
+//                         styles.border = `${weight}px solid ${colorString(lastStroke.color)}`;
+//                     }
+//                 }
+//
+//                 const cornerRadii = node.rectangleCornerRadii;
+//                 if (cornerRadii && cornerRadii.length === 4 && cornerRadii[0] + cornerRadii[1] + cornerRadii[2] + cornerRadii[3] > 0) {
+//                     styles.borderRadius = `${cornerRadii[0]}px ${cornerRadii[1]}px ${cornerRadii[2]}px ${cornerRadii[3]}px`;
+//                 }
+//             }
+//         } else if (node.type === 'TEXT') {
+//             const lastFill = getPaint(node.fills);
+//             if (lastFill) {
+//                 styles.color = colorString(lastFill.color);
+//             }
+//
+//             const lastStroke = getPaint(node.strokes);
+//             if (lastStroke) {
+//                 const weight = node.strokeWeight || 1;
+//                 styles.WebkitTextStroke = `${weight}px ${colorString(lastStroke.color)}`;
+//             }
+//
+//             const fontStyle = node.style;
+//
+//             const applyFontStyle = (_styles: any, fontStyle: any) => {
+//                 if (fontStyle) {
+//                     _styles.fontSize = fontStyle.fontSize;
+//                     _styles.fontWeight = fontStyle.fontWeight;
+//                     _styles.fontFamily = fontStyle.fontFamily;
+//                     _styles.textAlign = fontStyle.textAlignHorizontal;
+//                     _styles.fontStyle = fontStyle.italic ? 'italic' : 'normal';
+//                     _styles.lineHeight = `${fontStyle.lineHeightPercent * 1.25}%`;
+//                     _styles.letterSpacing = `${fontStyle.letterSpacing}px`;
+//                 }
+//             }
+//             applyFontStyle(styles, fontStyle);
+//
+//             if (node.name.substring(0, 6) === 'input:') {
+//                 content = [`<input key="${node.id}" type="text" placeholder="${node.characters}" name="${node.name.substring(7)}" />`];
+//             } else if (node.characterStyleOverrides) {
+//                 let para = '';
+//                 const ps = [];
+//                 const styleCache: any = {};
+//                 let currStyle = 0;
+//
+//                 const commitParagraph = (key: any) => {
+//                     if (para !== '') {
+//                         if (styleCache[currStyle] == null && currStyle !== 0) {
+//                             styleCache[currStyle] = {};
+//                             applyFontStyle(styleCache[currStyle], node.styleOverrideTable[currStyle]);
+//                         }
+//
+//                         const styleOverride = styleCache[currStyle] ? JSON.stringify(styleCache[currStyle]) : '{}';
+//
+//                         ps.push(`<span style={${styleOverride}} key="${key}">${para}</span>`);
+//                         para = '';
+//                     }
+//                 }
+//
+//                 for (const i in node.characters) {
+//                     let idx = node.characterStyleOverrides[i];
+//
+//                     if (node.characters[i] === '\n') {
+//                         commitParagraph(i);
+//                         ps.push(`<br key="${`br${i}`}" />`);
+//                         continue;
+//                     }
+//
+//                     if (idx == null) idx = 0;
+//                     if (idx !== currStyle) {
+//                         commitParagraph(i);
+//                         currStyle = idx;
+//                     }
+//
+//                     para += node.characters[i];
+//                 }
+//                 commitParagraph('end');
+//
+//                 content = ps;
+//             } else {
+//                 content = node.characters.split("\n").map((line: any, idx: any) => `<div key="${idx}">${line}</div>`);
+//             }
+//         }
+//         function printDiv (styles: any, outerStyle: any, indent: any) {
+//             print(`<div style={${JSON.stringify(outerStyle)}} className="${outerClass}">`, indent);
+//             print(`  <div`, indent);
+//             print(`    id="${node.id}"`, indent);
+//             print(`    style={${JSON.stringify(styles)}}`, indent);
+//             print(`    class="${innerClass}"`, indent);
+//             print(`  >`, indent);
+//         }
+//
+//         if (parent != null) {
+//             printDiv(styles, outerStyle, indent);
+//         }
+//
+//         if (node.id !== component.id && node.name.charAt(0) === '#') {
+//             print(`    <C${node.name.replace(/\W+/g, '')} {...this.props} nodeId="${node.id}" />`, indent);
+//             await createComponent(node, imgMap, componentMap, fileKey);
+//         } else if (node.type === 'VECTOR') {
+//             print(`    <div className="vector" dangerouslySetInnerHTML={{__html: \`${imgMap[node.id]}\`}} />`, indent);
+//         } else {
+//             const newNodeBounds = node.absoluteBoundingBox;
+//             const newLastVertical = newNodeBounds && newNodeBounds.y + newNodeBounds.height;
+//             print(`    <div>`, indent);
+//             let first = true;
+//             for (const child of minChildren) {
+//                 await visitNode(child, node, first ? null : newLastVertical, indent + '      ');
+//                 first = false;
+//             }
+//             for (const child of centerChildren) await visitNode(child, node, null, indent + '      ');
+//             if (maxChildren.length > 0) {
+//                 outerClass += ' maxer';
+//                 styles.width = '100%';
+//                 styles.pointerEvents = 'none';
+//                 styles.backgroundColor = null;
+//                 printDiv(styles, outerStyle, indent + '      ');
+//                 first = true;
+//                 for (const child of maxChildren) {
+//                     await visitNode(child, node, first ? null : newLastVertical, indent + '          ');
+//                     first = false;
+//                 }
+//                 print(`        </div>`, indent);
+//                 print(`      </div>`, indent);
+//             }
+//             if (content != null) {
+//                 if (node.name.charAt(0) === '$') {
+//                     const varName = node.name.substring(1);
+//                     print(`      {this.props.${varName} && this.props.${varName}.split("\\n").map((line, idx) => <div key={idx}>{line}</div>)}`, indent);
+//                     print(`      {!this.props.${varName} && (<div>`, indent);
+//                     for (const piece of content) {
+//                         print(piece, indent + '        ');
+//                     }
+//                     print(`      </div>)}`, indent);
+//                 } else {
+//                     for (const piece of content) {
+//                         print(piece, indent + '      ');
+//                     }
+//                 }
+//             }
+//             print(`    </div>`, indent);
+//         }
+//         if (parent != null) {
+//             print(`  </div>`, indent);
+//             print(`</div>`, indent);
+//         }
+//
+//         return doc
+//     }
+//
+//     doc = await visitNode(component, null, null, '  ');
+//     componentMap[component.id] = { instance, name, doc };
+// }

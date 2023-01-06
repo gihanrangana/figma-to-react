@@ -5,6 +5,7 @@ import Component from "./Component";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import JsxParser from "react-jsx-parser";
+import { renderToString } from "react-dom/server";
 
 function App () {
 
@@ -21,21 +22,16 @@ function App () {
             <button onClick={handleClick}>{figma.loading ? 'Loading...' : 'Get Component'}</button>
 
             {!figma.loading && figma.data &&
-                Object.keys(figma.data).map((key) => {
-
-                    // const Com = ReactDOM.createClass()
+                figma.data.map((El: any) => {
 
                     return (
-                        // <div key={key} dangerouslySetInnerHTML={{__html:figma.data[key].doc}}></div>
-                        <div key={key}>
-                            {/* @ts-ignore */}
-                            <JsxParser jsx={figma.data[key].doc}/>
-                        </div>
+                        <Component str={El}/>
                     )
                 })
             }
         </div>
     )
 }
+
 
 export default App

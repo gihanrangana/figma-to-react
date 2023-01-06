@@ -1,7 +1,31 @@
+import { createElement } from "react";
 import axios from "axios";
+import { v4 as uuid } from 'uuid'
+
+function rgba2hex (orig: any) {
+    let a: any, isPercent: any,
+        rgb = orig.replace(/\s/g, '').match(/^rgba?\((\d+),(\d+),(\d+),?([^,\s)]+)?/i),
+        alpha = (rgb && rgb[4] || "").trim(),
+        hex = rgb ?
+            (rgb[1] | 1 << 8).toString(16).slice(1) +
+            (rgb[2] | 1 << 8).toString(16).slice(1) +
+            (rgb[3] | 1 << 8).toString(16).slice(1) : orig;
+
+    if (alpha !== "") {
+        a = alpha;
+    } else {
+        a = 0o1;
+    }
+    // multiply before convert to HEX
+    a = ((a * 255) | 1 << 8).toString(16).slice(1)
+    hex = hex + a;
+
+    return hex;
+}
 
 export const colorString = (color: any) => {
-    return `rgba(${Math.round(color.r * 255)}, ${Math.round(color.g * 255)}, ${Math.round(color.b * 255)}, ${color.a})`;
+    const rgba = `rgba(${Math.round(color.r * 255)}, ${Math.round(color.g * 255)}, ${Math.round(color.b * 255)}, ${color.a})`
+    return `#${rgba2hex(rgba)}`;
 }
 
 export const dropShadow = (effect: any) => {
@@ -12,7 +36,7 @@ export const innerShadow = (effect: any) => {
     return `inset ${effect.offset.x}px ${effect.offset.y}px ${effect.radius}px ${colorString(effect.color)}`;
 }
 
-export const imageURL = async (hash: any, id: any, fileKey?: string | null) => {
+export const imageURL = async (hash: any, id?: any, fileKey?: string | null) => {
     if (!fileKey) return;
 
     let url = '';
@@ -23,6 +47,8 @@ export const imageURL = async (hash: any, id: any, fileKey?: string | null) => {
     })
     url = res.data.images[id]
     return `url(${url})`;
+    // const squash = hash.split('-').join('');
+    // return `url(https://s3-us-west-2.amazonaws.com/figma-alpha/img/${squash.substring(0, 4)}/${squash.substring(4, 8)}/${squash.substring(8)})`;
 }
 
 export const backgroundSize = (scaleMode: any) => {
@@ -66,4 +92,45 @@ export const paintToRadialGradient = (paint: any) => {
     }).join(', ');
 
     return `radial-gradient(${stops})`;
+}
+
+const getNodes = (str: string) => {
+    const dom: any = new DOMParser().parseFromString(str, 'text/html').body;
+    return Array.from(dom.querySelector('div:nth-child(1)').children)
+}
+export const createJSX = (domStr: any) => {
+
+    const nodes = typeof domStr === 'string' ? getNodes(domStr) : domStr;
+
+    const JSXNodes: any = [];
+    let attributesObj: any = {}
+    for (const node of nodes) {
+        const { attributes, localName: tag, childNodes, nodeValue, innerHtml }: any = node
+
+        attributesObj.key = uuid().slice(0, 4)
+
+        if (attributes) {
+            Array.from(attributes).forEach((attr: any) => {
+                switch (attr.name) {
+                    case 'style':
+                        const style = JSON.parse(attr.nodeValue.substring(1, attr.nodeValue.length - 1))
+                        attributesObj.style = style;
+                        break;
+                    default:
+                        attributesObj[attr.name] = attr.nodeValue;
+                        break;
+                }
+            })
+        }
+
+        if (tag) {
+            const JSXElement = createElement(tag, attributesObj, childNodes ? createJSX(childNodes) : [])
+            JSXNodes.push(JSXElement)
+        }
+        if (!tag) {
+            JSXNodes.push(nodeValue)
+        }
+    }
+
+    return JSXNodes;
 }

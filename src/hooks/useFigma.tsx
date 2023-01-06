@@ -1,6 +1,10 @@
 import axios from "axios";
 import { useState } from "react";
 import * as Figma from "../lib/Figma";
+// @ts-ignore
+// import * as Figma from "../lib/figmajs";
+import component from "../Component";
+import { createJSX } from "../lib/helpers";
 
 const vectorTypes: any = ['VECTOR', 'LINE', 'REGULAR_POLYGON', 'ELLIPSE', 'STAR'];
 
@@ -132,13 +136,15 @@ const useFigma = (fileKey: string) => {
             const componentMap: any = {}
             for (const child of canvas.children) {
                 if (child.name.charAt(0) === '#' && child.visible !== false) {
-                    Figma.createComponent(child, images, componentMap, fileKey)
+                    await Figma.createComponent(child, images, componentMap, fileKey)
                 }
             }
 
-            setData(componentMap)
+            const jsx = createJSX(componentMap['1:2'].doc)
+
             setLoading(false)
-            return componentMap;
+            setData(jsx)
+            return { jsx, componentMap };
 
         } catch (err: any) {
             console.error(err)

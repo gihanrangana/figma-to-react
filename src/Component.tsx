@@ -2,7 +2,7 @@ import React from 'react'
 
 const Component = (props: any) => {
 
-    return <div></div>
+    return props.str
 }
 
 interface ComponentProps {
