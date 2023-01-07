@@ -98,14 +98,14 @@ const getNodes = (str: string) => {
     const dom: any = new DOMParser().parseFromString(str, 'text/html').body;
     return Array.from(dom.querySelector('div:nth-child(1)').children)
 }
-export const createJSX = (domStr: any) => {
+export const createJSX = (domStr: any, props: any) => {
 
     const nodes = typeof domStr === 'string' ? getNodes(domStr) : domStr;
 
     const JSXNodes: any = [];
     let attributesObj: any = {}
     for (const node of nodes) {
-        const { attributes, localName: tag, childNodes, nodeValue, innerHtml }: any = node
+        let { attributes, localName: tag, childNodes, nodeValue, innerHtml }: any = node
 
         attributesObj.key = uuid().slice(0, 4)
 
@@ -116,6 +116,9 @@ export const createJSX = (domStr: any) => {
                         const style = JSON.parse(attr.nodeValue.substring(1, attr.nodeValue.length - 1))
                         attributesObj.style = style;
                         break;
+                    case 'classname':
+                        attributesObj.className = attr.nodeValue
+                        break;
                     default:
                         attributesObj[attr.name] = attr.nodeValue;
                         break;
@@ -124,11 +127,17 @@ export const createJSX = (domStr: any) => {
         }
 
         if (tag) {
-            const JSXElement = createElement(tag, attributesObj, childNodes ? createJSX(childNodes) : [])
+            const JSXElement = createElement(tag, attributesObj, childNodes ? createJSX(childNodes, props) : [])
             JSXNodes.push(JSXElement)
         }
         if (!tag) {
-            JSXNodes.push(nodeValue)
+
+            const key = nodeValue.substring(nodeValue.indexOf('[') + 1, nodeValue.indexOf(']'))
+            let value = nodeValue
+            if (props[key]) {
+                value = value.replace(`[${key}]`, props[key])
+            }
+            JSXNodes.push(value)
         }
     }
 

@@ -299,7 +299,7 @@ export const createComponent = async (component: any, imgMap: any, componentMap:
         } else {
             const newNodeBounds = node.absoluteBoundingBox;
             const newLastVertical = newNodeBounds && newNodeBounds.y + newNodeBounds.height;
-            print(`    <div id="test">`, indent);
+            print(`    <div>`, indent);
             let first = true;
             for (const child of minChildren) {
                 await visitNode(child, node, first ? null : newLastVertical, indent + '      ');

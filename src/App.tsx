@@ -12,7 +12,11 @@ function App () {
     const figma: any = useFigma("WKp4dRaGlTUUDimbDsZF3x")
 
     const handleClick = () => {
-        figma.run().then((res: any) => {
+        // passing props to figma component, figma component should have text includes [title], props.title will replace with [title] text
+        figma.run({
+            title: "Name",
+            para: "para"
+        }).then((res: any) => {
             console.log(res);
         })
     }

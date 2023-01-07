@@ -86,7 +86,7 @@ const useFigma = (fileKey: string) => {
         }
     }
 
-    const run = async () => {
+    const run = async (props: any) => {
         try {
             setLoading(true)
             const response: any = await api.get(`/v1/files/${fileKey}`)
@@ -140,7 +140,7 @@ const useFigma = (fileKey: string) => {
                 }
             }
 
-            const jsx = createJSX(componentMap['1:2'].doc)
+            const jsx = createJSX(componentMap['1:2'].doc, props)
 
             setLoading(false)
             setData(jsx)
