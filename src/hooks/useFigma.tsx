@@ -9,12 +9,12 @@ import FigmaLogin from "../components/FigmaLogin/FigmaLogin";
 
 const vectorTypes: any = ['VECTOR', 'LINE', 'REGULAR_POLYGON', 'ELLIPSE', 'STAR'];
 
-const api = axios.create({
-    baseURL: 'https://api.figma.com',
-    headers: {
-        "X-Figma-Token": import.meta.env.VITE_FIGMA_TOKEN
-    }
-})
+// const api = axios.create({
+//     baseURL: 'https://api.figma.com',
+//     headers: {
+//         "X-Figma-Token": import.meta.env.VITE_FIGMA_TOKEN
+//     }
+// })
 
 const location = window.location.href.replace(window.location.search, '')
 const CLIENT_ID = 'Z70USUDZKrFDMF1DabBe3Y'
@@ -22,15 +22,12 @@ const CLIENT_SECRET = 'AATunePpR13fV61pikgCxK0NReiUde'
 const REDIRECT_URL = encodeURIComponent(location.substring(0, location.length - 1))
 const SCOPE = 'file_read'
 
-/**
- *
- * @param fileKey
- */
-const useFigma = (fileKey: string) => {
+const useFigma = () => {
     const [data, setData] = useState(null)
     const [status, setStatus] = useState<any>(null)
     const [error, setError]: any = useState(null)
     const [user, setUser] = useState<any>(null)
+    const [fileKey, setFileKey] = useState<any>(null)
     const [authToken, setAuthToken] = useLocalStorage('figmaAuthToken')
 
     const [searchParams, setSearchParams] = useSearchParams()
@@ -99,7 +96,11 @@ const useFigma = (fileKey: string) => {
     const run = async (props: any) => {
         try {
             setStatus('Fetching files...')
-            const response: any = await api.get(`/v1/files/${fileKey}`)
+            const response: any = await axios.get(`https://api.figma.com/v1/files/${fileKey}`, {
+                headers: {
+                    Authorization: `Bearer ${authToken.access_token}`
+                }
+            })
 
             const doc = response.data.document;
             const canvas = doc.children[0]
@@ -118,7 +119,11 @@ const useFigma = (fileKey: string) => {
 
             if (vectorList.length > 0) {
                 let guids = vectorList.join(',');
-                const imageJSON: any = await api.get(`/v1/images/${fileKey}?ids=${guids}&format=svg`);
+                const imageJSON: any = await axios.get(`https://api.figma.com/v1/images/${fileKey}?ids=${guids}&format=svg`, {
+                    headers: {
+                        Authorization: `Bearer ${authToken.access_token}`
+                    }
+                });
                 images = imageJSON.data.images || {};
             }
 
@@ -194,6 +199,7 @@ const useFigma = (fileKey: string) => {
 
         (async () => {
             setStatus('Fetching User...')
+            setUser(null)
             try {
                 if (!authToken?.access_token) {
                     setStatus(null)
@@ -207,6 +213,7 @@ const useFigma = (fileKey: string) => {
                 setUser(user.data)
 
             } catch (err: any) {
+                setAuthToken(null)
                 setError({ message: err.message, code: err.code })
             }
             setStatus(null)
@@ -236,15 +243,17 @@ const useFigma = (fileKey: string) => {
             status,
             user,
             authToken,
+            fileKey,
             run,
             authenticate,
+            setFileKey,
             renderLogin,
             CLIENT_ID,
             CLIENT_SECRET,
             REDIRECT_URL,
             SCOPE
         }
-    }, [data, error, status, user])
+    }, [data, error, status, user, fileKey])
 }
 
 

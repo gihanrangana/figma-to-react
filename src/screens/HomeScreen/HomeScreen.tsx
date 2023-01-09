@@ -1,25 +1,20 @@
 import React, { useEffect } from 'react'
 import useFigma from "../../hooks/useFigma";
-import FigmaLogin from "../../components/FigmaLogin/FigmaLogin";
-import Component from "../../Component";
 import { useSearchParams } from "react-router-dom";
-
-const CLIENT_ID = 'Z70USUDZKrFDMF1DabBe3Y'
-const CLIENT_SECRET = 'AATunePpR13fV61pikgCxK0NReiUde'
-const REDIRECT_URL = encodeURIComponent(window.location.href.substring(0, window.location.href.length - 1))
-const SCOPE = 'file_read'
+import FigmaModal from "../../components/FigmaModal/FigmaModal";
+import Component from "../../Component";
 
 const HomeScreen: React.FC<HomeScreenProps> = (props) => {
-    const figma: any = useFigma("nAeqtS8nD4u59r6hvx841K")
+
+    const figma: any = useFigma()
 
     const [searchParams, setSearchParams] = useSearchParams();
 
-    const handleClick = () => {
+    const handleClick = (props: any, values: any) => {
+        // figma.setKey(value)
+        console.log(`handleClick`, values)
         // passing props to figma component, figma component should have text includes [title], props.title will replace with [title] text
-        figma.run({
-            title: "Name",
-            para: "para"
-        }).then((res: any) => {
+        figma.run(props).then((res: any) => {
             console.log(res);
         })
     }
@@ -47,6 +42,17 @@ const HomeScreen: React.FC<HomeScreenProps> = (props) => {
             {figma.status && <p>{figma.status}</p>}
 
             {figma.renderLogin()}
+
+            {figma.user && !figma.error && !figma.data && <FigmaModal setKey={figma.setFileKey} status={figma.status} handleSubmit={handleClick}/>}
+
+            {figma.data &&
+                figma.data.map((El: any) => {
+
+                    return (
+                        <Component str={El}/>
+                    )
+                })
+            }
 
             {/*{!figma.loading && !figma.error && figma.data &&*/}
             {/*    figma.data.map((El: any) => {*/}

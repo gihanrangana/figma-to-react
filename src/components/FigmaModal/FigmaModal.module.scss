@@ -1,0 +1,44 @@
+.modalBackdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: backdrop 0.3s alternate;
+}
+
+.modalContent {
+    width: 550px;
+    height: 600px;
+    background: #fff;
+    border-radius: 20px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: content cubic-bezier(.17, .67, .83, .67) 0.5s alternate;
+}
+
+@keyframes content {
+    from {
+        opacity: 0;
+        transform: translate(0, -30%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(0, 0);
+    }
+}
+
+@keyframes backdrop {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
