@@ -1,10 +1,11 @@
 import axios from "axios";
-import { useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { redirect, useSearchParams } from "react-router-dom";
 import * as Figma from "../lib/Figma";
-// @ts-ignore
-// import * as Figma from "../lib/figmajs";
-import component from "../Component";
+
 import { createJSX } from "../lib/helpers";
+import useLocalStorage from "./useLocalStorage";
+import FigmaLogin from "../components/FigmaLogin/FigmaLogin";
 
 const vectorTypes: any = ['VECTOR', 'LINE', 'REGULAR_POLYGON', 'ELLIPSE', 'STAR'];
 
@@ -15,6 +16,11 @@ const api = axios.create({
     }
 })
 
+const location = window.location.href.replace(window.location.search, '')
+const CLIENT_ID = 'Z70USUDZKrFDMF1DabBe3Y'
+const CLIENT_SECRET = 'AATunePpR13fV61pikgCxK0NReiUde'
+const REDIRECT_URL = encodeURIComponent(location.substring(0, location.length - 1))
+const SCOPE = 'file_read'
 
 /**
  *
@@ -22,8 +28,12 @@ const api = axios.create({
  */
 const useFigma = (fileKey: string) => {
     const [data, setData] = useState(null)
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState(null)
+    const [status, setStatus] = useState<any>(null)
+    const [error, setError]: any = useState(null)
+    const [user, setUser] = useState<any>(null)
+    const [authToken, setAuthToken] = useLocalStorage('figmaAuthToken')
+
+    const [searchParams, setSearchParams] = useSearchParams()
 
     let vectorMap: any = {};
     const vectorList: any = [];
@@ -88,7 +98,7 @@ const useFigma = (fileKey: string) => {
 
     const run = async (props: any) => {
         try {
-            setLoading(true)
+            setStatus('Fetching files...')
             const response: any = await api.get(`/v1/files/${fileKey}`)
 
             const doc = response.data.document;
@@ -113,12 +123,13 @@ const useFigma = (fileKey: string) => {
             }
 
             if (images) {
+                console.log(images);
                 let promises = [];
                 let guids = [];
                 for (const guid in images) {
                     if (images[guid] == null) continue;
                     guids.push(guid);
-                    promises.push(axios.get(images[guid]));
+                    promises.push(fetch(images[guid]));
                 }
 
                 let responses: any = await Promise.all(promises);
@@ -142,16 +153,98 @@ const useFigma = (fileKey: string) => {
 
             const jsx = createJSX(componentMap['1:2'].doc, props)
 
-            setLoading(false)
+            setStatus(null)
             setData(jsx)
+            setError(null)
             return { jsx, componentMap };
 
         } catch (err: any) {
-            console.error(err)
+            setStatus(null)
+            setData(null)
+            setError({ message: err.message, code: err.code });
         }
     }
 
-    return { run, data, loading }
+    const authenticate = async (code: string | null) => {
+        setStatus('Authenticating...')
+        try {
+            if (authToken.accessToken) return;
+            const url = `https://www.figma.com/api/oauth/token?` +
+                `client_id=${CLIENT_ID}` +
+                `&client_secret=${CLIENT_SECRET}` +
+                `&redirect_uri=${REDIRECT_URL}` +
+                `&scope=${SCOPE}` +
+                `&code=${code}` +
+                `&grant_type=authorization_code`
+
+            const authResponse = await axios.post(url)
+            setAuthToken(authResponse.data)
+
+            searchParams.delete('code')
+            searchParams.delete('state')
+            setSearchParams(searchParams)
+
+        } catch (err: any) {
+            setError({ message: err.message, code: err.code });
+        }
+        setStatus(null)
+    }
+
+    useEffect(() => {
+
+        (async () => {
+            setStatus('Fetching User...')
+            try {
+                if (!authToken?.access_token) {
+                    setStatus(null)
+                    return
+                }
+                const user = await axios.get('https://api.figma.com/v1/me', {
+                    headers: {
+                        Authorization: `Bearer ${authToken.access_token}`
+                    }
+                })
+                setUser(user.data)
+
+            } catch (err: any) {
+                setError({ message: err.message, code: err.code })
+            }
+            setStatus(null)
+        })()
+
+    }, [authToken])
+
+    const renderLogin = useCallback(() => {
+        return (
+            <>
+                {!status &&
+                    <FigmaLogin
+                        user={user}
+                        CLIENT_ID={CLIENT_ID}
+                        REDIRECT_URL={REDIRECT_URL}
+                        SCOPE={SCOPE}
+                    />
+                }
+            </>
+        )
+    }, [user, status])
+
+    return useMemo(() => {
+        return {
+            data,
+            error,
+            status,
+            user,
+            authToken,
+            run,
+            authenticate,
+            renderLogin,
+            CLIENT_ID,
+            CLIENT_SECRET,
+            REDIRECT_URL,
+            SCOPE
+        }
+    }, [data, error, status, user])
 }
 
 
