@@ -10,13 +10,10 @@ const HomeScreen: React.FC<HomeScreenProps> = (props) => {
 
     const [searchParams, setSearchParams] = useSearchParams();
 
-    const handleClick = (props: any, values: any) => {
-        // figma.setKey(value)
-        console.log(`handleClick`, values)
+    const handleClick = async (props: any) => {
+
         // passing props to figma component, figma component should have text includes [title], props.title will replace with [title] text
-        figma.run(props).then((res: any) => {
-            console.log(res);
-        })
+        await figma.run(props)
     }
 
     useEffect(() => {
@@ -46,22 +43,13 @@ const HomeScreen: React.FC<HomeScreenProps> = (props) => {
             {figma.user && !figma.error && !figma.data && <FigmaModal setKey={figma.setFileKey} status={figma.status} handleSubmit={handleClick}/>}
 
             {figma.data &&
-                figma.data.map((El: any) => {
+                figma.data.map((El: any, index: any) => {
 
                     return (
-                        <Component str={El}/>
+                        <Component key={index} str={El}/>
                     )
                 })
             }
-
-            {/*{!figma.loading && !figma.error && figma.data &&*/}
-            {/*    figma.data.map((El: any) => {*/}
-
-            {/*        return (*/}
-            {/*            <Component str={El}/>*/}
-            {/*        )*/}
-            {/*    })*/}
-            {/*}*/}
         </div>
     )
 }

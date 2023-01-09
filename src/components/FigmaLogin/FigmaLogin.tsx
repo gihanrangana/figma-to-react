@@ -7,7 +7,7 @@ const FigmaLogin: React.FC<FigmaLoginProps> = (props) => {
     const handleClick = () => {
         window.location.href = `https://www.figma.com/oauth?client_id=${CLIENT_ID}&redirect_uri=${redirectUrl || REDIRECT_URL}&scope=${SCOPE}&state=null&response_type=code`
     }
-    console.log(user)
+
     return (
         <>
             <FigmaButton

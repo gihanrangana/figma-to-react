@@ -39,7 +39,7 @@ const ModalContainer: React.FC<any> = (props) => {
                 {step === 1 &&
                     <>
                         <button
-                            onClick={handleSubmit.bind(null, { title: "name", para: "paragraph" } /* this object should change in future */, value)}
+                            onClick={handleSubmit.bind(null, { title: "name", para: "paragraph" } /* this object should change in future */)}
                         >
                             {status ? status : 'Run'}
                         </button>
