@@ -263,6 +263,7 @@ const useFigma = () => {
             authenticate,
             setFileKey,
             setSelectedFrame,
+            setAuthToken,
             renderLogin,
             get CLIENT_ID () {
                 return CLIENT_ID

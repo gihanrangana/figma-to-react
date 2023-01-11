@@ -5,7 +5,7 @@ import Component from "../../../Component";
 
 const FigmaToReact: React.FC<FigmaToReactProps> = (props) => {
 
-    const { figma } = props
+    const { figma, authToken } = props
 
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -18,6 +18,10 @@ const FigmaToReact: React.FC<FigmaToReactProps> = (props) => {
         if (!code) return
 
         (async () => {
+            if (authToken) {
+                figma.setAuthToken(authToken)
+                return;
+            }
             await figma.authenticate(code);
         })()
 
@@ -59,7 +63,8 @@ const FigmaToReact: React.FC<FigmaToReactProps> = (props) => {
 }
 
 interface FigmaToReactProps {
-    figma: any
+    figma: any,
+    authToken?: {}
 }
 
 export default FigmaToReact
