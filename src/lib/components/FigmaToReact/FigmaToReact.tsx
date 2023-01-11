@@ -27,7 +27,7 @@ const FigmaToReact: React.FC<FigmaToReactProps> = (props) => {
             await figma.authenticate(code);
         })()
 
-    }, [searchParams])
+    }, [searchParams, authToken])
 
     return (
         <div>
