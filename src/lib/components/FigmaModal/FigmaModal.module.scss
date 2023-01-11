@@ -20,7 +20,37 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-direction: column;
+    gap: 20px;
     animation: content cubic-bezier(.17, .67, .83, .67) 0.5s alternate;
+
+    input {
+        width: 100%;
+        padding: 8px 16px;
+        outline: none;
+        border: 1px solid hsla(0, 0, 0, 15%);
+        border-radius: 8px;
+    }
+}
+
+.framesList {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    list-style: none;
+
+    .frameListItem {
+        padding: 8px 16px;
+        border: 1px solid hsla(0, 0, 0, 10%);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        margin-bottom: 10px;
+
+        &:hover {
+            border-color: hsla(222, 75%, 59%, 100%)
+        }
+    }
 }
 
 @keyframes content {

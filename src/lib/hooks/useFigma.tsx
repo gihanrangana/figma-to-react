@@ -1,20 +1,13 @@
-import axios from "axios";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { redirect, useSearchParams } from "react-router-dom";
-import * as Figma from "../lib/Figma";
+import axios from "axios";
+import { useSearchParams } from "react-router-dom";
+import * as Figma from "../Figma";
 
-import { createJSX } from "../lib/helpers";
+import { createJSX } from "../helpers";
 import useLocalStorage from "./useLocalStorage";
 import FigmaLogin from "../components/FigmaLogin/FigmaLogin";
 
 const vectorTypes: any = ['VECTOR', 'LINE', 'REGULAR_POLYGON', 'ELLIPSE', 'STAR'];
-
-// const api = axios.create({
-//     baseURL: 'https://api.figma.com',
-//     headers: {
-//         "X-Figma-Token": import.meta.env.VITE_FIGMA_TOKEN
-//     }
-// })
 
 const location = window.location.href.replace(window.location.search, '')
 const CLIENT_ID = 'Z70USUDZKrFDMF1DabBe3Y'
@@ -28,6 +21,9 @@ const useFigma = () => {
     const [error, setError]: any = useState(null)
     const [user, setUser] = useState<any>(null)
     const [fileKey, setFileKey] = useState<any>(null)
+    const [canvasMap, setCanvasMap] = useState<any>(null)
+    const [frames, setFrames] = useState<any>(null)
+    const [selectedFrame, setSelectedFrame] = useState<any>(null)
     const [authToken, setAuthToken] = useLocalStorage('figmaAuthToken')
 
     const [searchParams, setSearchParams] = useSearchParams()
@@ -93,7 +89,8 @@ const useFigma = () => {
         }
     }
 
-    const run = async (props: any) => {
+    const retrieveFiles = useCallback(async (fileKey: any) => {
+        setFileKey(fileKey)
         try {
             setStatus('Fetching files...')
             const response: any = await axios.get(`https://api.figma.com/v1/files/${fileKey}`, {
@@ -103,10 +100,26 @@ const useFigma = () => {
             })
 
             const doc = response.data.document;
-            const canvas = doc.children[0]
+            setCanvasMap(doc.children[0])
+            setFrames(doc.children[0].children.map((child: any) => ({ id: child.id, name: child.name })))
 
-            let html = '';
-            let vector: any;
+        } catch (err: any) {
+            setError({ message: err.message, code: err.code });
+        }
+        setStatus(null)
+    }, [fileKey, authToken])
+
+    const run = async (props: any) => {
+        try {
+            setStatus('Generating structure...')
+            let canvas = canvasMap;
+
+            if (selectedFrame) {
+                canvas.children = canvasMap.children.filter((child: any) => child.id === selectedFrame)
+            }
+
+            console.log(canvas)
+
             for (let i = 0; i < canvas.children.length; i++) {
                 const child = canvas.children[i]
                 if (child.name.charAt(0) === '#' && child.visible !== false) {
@@ -128,7 +141,6 @@ const useFigma = () => {
             }
 
             if (images) {
-                console.log(images);
                 let promises = [];
                 let guids = [];
                 for (const guid in images) {
@@ -156,7 +168,7 @@ const useFigma = () => {
                 }
             }
 
-            const jsx = createJSX(componentMap['1:2'].doc, props)
+            const jsx = createJSX(componentMap[selectedFrame].doc, props)
 
             setStatus(null)
             setData(jsx)
@@ -173,7 +185,7 @@ const useFigma = () => {
     const authenticate = async (code: string | null) => {
         setStatus('Authenticating...')
         try {
-            if (authToken.accessToken) return;
+            if (authToken?.accessToken) return;
             const url = `https://www.figma.com/api/oauth/token?` +
                 `client_id=${CLIENT_ID}` +
                 `&client_secret=${CLIENT_SECRET}` +
@@ -236,24 +248,44 @@ const useFigma = () => {
         )
     }, [user, status])
 
-    return useMemo(() => {
+    const figma: any = useMemo(() => {
         return {
             data,
             error,
             status,
             user,
-            authToken,
+            // authToken,
             fileKey,
+            frames,
+            selectedFrame,
             run,
+            retrieveFiles,
             authenticate,
             setFileKey,
+            setSelectedFrame,
             renderLogin,
-            CLIENT_ID,
-            CLIENT_SECRET,
-            REDIRECT_URL,
-            SCOPE
+            get CLIENT_ID () {
+                return CLIENT_ID
+            },
+            get CLIENT_SECRET () {
+                return CLIENT_SECRET;
+            },
+            get REDIRECT_URL () {
+                return REDIRECT_URL
+            },
+            get SCOPE () {
+                return SCOPE
+            },
+            get authToken () {
+                return authToken
+            },
+            get canvas () {
+                return canvasMap
+            }
         }
-    }, [data, error, status, user, fileKey])
+    }, [data, error, status, user, fileKey, canvasMap, selectedFrame])
+
+    return figma;
 }
 
 
