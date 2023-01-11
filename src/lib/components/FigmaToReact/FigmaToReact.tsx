@@ -14,14 +14,16 @@ const FigmaToReact: React.FC<FigmaToReactProps> = (props) => {
     }
 
     useEffect(() => {
+
+        if (authToken) {
+            figma.setAuthToken(authToken)
+            return;
+        }
+
         const code = searchParams.get("code");
         if (!code) return
 
         (async () => {
-            if (authToken) {
-                figma.setAuthToken(authToken)
-                return;
-            }
             await figma.authenticate(code);
         })()
 
