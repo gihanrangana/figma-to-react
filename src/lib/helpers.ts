@@ -39,10 +39,12 @@ export const innerShadow = (effect: any) => {
 export const imageURL = async (hash: any, id?: any, fileKey?: string | null) => {
     if (!fileKey) return;
 
+    const authToken = JSON.parse(localStorage.getItem("figmaAuthToken") || '')
+
     let url = '';
     const res = await axios.get(`https://api.figma.com/v1/images/${fileKey}?ids=${id}&format=png`, {
         headers: {
-            'X-Figma-Token': import.meta.env.VITE_FIGMA_TOKEN
+            Authorization: `Bearer ${authToken.access_token}`
         }
     })
     url = res.data.images[id]
