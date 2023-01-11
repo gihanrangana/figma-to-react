@@ -1,6 +1,10 @@
 # figma-to-react
 This repo includes how to import figma template directly to react project using figma api
 
+# Demo
+
+[Demo](https://figma-to-react-zeta.vercel.app/)
+
 ## Install
 ```
 npm install 
