@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { useSearchParams } from "react-router-dom";
 import FigmaModal from "../FigmaModal/FigmaModal";
-import Component from "../../../Component";
+import Component from "../Component";
 
 const FigmaToReact: React.FC<FigmaToReactProps> = (props) => {
 
