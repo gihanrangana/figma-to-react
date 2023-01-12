@@ -53,6 +53,7 @@ const ModalContainer: React.FC<any> = (props) => {
                                     {frames.map((frame: any, i: number) => {
                                         return (
                                             <li
+                                                key={i}
                                                 className={styles.frameListItem}
                                                 onClick={handleSelectFrame.bind(null, frame.id)}
                                             >

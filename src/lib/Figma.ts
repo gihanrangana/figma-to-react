@@ -39,8 +39,8 @@ const expandChildren = (node: any, parent: any, minChildren: any, maxChildren: a
 }
 
 export const createComponent = async (component: any, imgMap: any, componentMap: any, fileKey: any) => {
-    const name = 'C' + component.name.replace(/\W+/g, '');
-    const instance = name + component.id.replace(';', 'S').replace(':', 'D');
+    const name = component.name.replace(/\W+/g, '');
+    const instance = name + component.id;
     let doc = '';
     function print (msg: any, indent: any) {
         doc += `${indent}${msg}\n`;

@@ -5,7 +5,7 @@ import Component from "../Component";
 
 const FigmaToReact: React.FC<FigmaToReactProps> = (props) => {
 
-    const { figma, authToken } = props
+    const { figma, authToken, onHtmlReceived } = props
 
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -15,7 +15,15 @@ const FigmaToReact: React.FC<FigmaToReactProps> = (props) => {
 
     useEffect(() => {
 
+        if (!onHtmlReceived) return;
+        onHtmlReceived(figma.html)
+
+    }, [figma.html])
+
+    useEffect(() => {
+
         if (authToken) {
+            // console.log('Auth token')
             figma.setAuthToken(authToken)
             return;
         }
@@ -27,7 +35,7 @@ const FigmaToReact: React.FC<FigmaToReactProps> = (props) => {
             await figma.authenticate(code);
         })()
 
-    }, [searchParams, authToken])
+    }, [searchParams])
 
     return (
         <div>
@@ -66,7 +74,8 @@ const FigmaToReact: React.FC<FigmaToReactProps> = (props) => {
 
 interface FigmaToReactProps {
     figma: any,
-    authToken?: {}
+    authToken?: {},
+    onHtmlReceived?: (html: any) => void
 }
 
 export default FigmaToReact

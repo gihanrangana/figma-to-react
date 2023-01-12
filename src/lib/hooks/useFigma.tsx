@@ -24,6 +24,7 @@ const useFigma = () => {
     const [canvasMap, setCanvasMap] = useState<any>(null)
     const [frames, setFrames] = useState<any>(null)
     const [selectedFrame, setSelectedFrame] = useState<any>(null)
+    const [html, setHtml] = useState<any>(null)
     const [authToken, setAuthToken] = useLocalStorage('figmaAuthToken')
 
     const [searchParams, setSearchParams] = useSearchParams()
@@ -118,8 +119,6 @@ const useFigma = () => {
                 canvas.children = canvasMap.children.filter((child: any) => child.id === selectedFrame)
             }
 
-            console.log(canvas)
-
             for (let i = 0; i < canvas.children.length; i++) {
                 const child = canvas.children[i]
                 if (child.name.charAt(0) === '#' && child.visible !== false) {
@@ -168,6 +167,7 @@ const useFigma = () => {
                 }
             }
 
+            setHtml(componentMap[selectedFrame])
             const jsx = createJSX(componentMap[selectedFrame].doc, props)
 
             setStatus(null)
@@ -254,7 +254,7 @@ const useFigma = () => {
             error,
             status,
             user,
-            // authToken,
+            html,
             fileKey,
             frames,
             selectedFrame,
