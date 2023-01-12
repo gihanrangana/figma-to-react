@@ -295,7 +295,7 @@ export const createComponent = async (component: any, imgMap: any, componentMap:
             print(`    <C${node.name.replace(/\W+/g, '')} {...this.props} nodeId="${node.id}" />`, indent);
             await createComponent(node, imgMap, componentMap, fileKey);
         } else if (node.type === 'VECTOR') {
-            print(`    <div className="vector" dangerouslySetInnerHTML={{__html: \`${imgMap[node.id]}\`}} />`, indent);
+            print(`    <div className="vector">${imgMap[node.id]}</div>`, indent);
         } else {
             const newNodeBounds = node.absoluteBoundingBox;
             const newLastVertical = newNodeBounds && newNodeBounds.y + newNodeBounds.height;

@@ -100,6 +100,10 @@ const getNodes = (str: string) => {
     const dom: any = new DOMParser().parseFromString(str, 'text/html').body;
     return Array.from(dom.querySelector('div:nth-child(1)').children)
 }
+
+export const camelCase = (str: string) => {
+    return str.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase());
+}
 export const createJSX = (domStr: any, props: any) => {
 
     const nodes = typeof domStr === 'string' ? getNodes(domStr) : domStr;
@@ -113,7 +117,14 @@ export const createJSX = (domStr: any, props: any) => {
 
         if (attributes) {
             Array.from(attributes).forEach((attr: any) => {
-                switch (attr.name) {
+
+                let attrName = attr.name
+
+                if (attrName.includes('-')) {
+                    attrName = camelCase(attrName)
+                }
+
+                switch (attrName) {
                     case 'style':
                         const style = JSON.parse(attr.nodeValue.substring(1, attr.nodeValue.length - 1))
                         attributesObj.style = style;
@@ -122,7 +133,7 @@ export const createJSX = (domStr: any, props: any) => {
                         attributesObj.className = attr.nodeValue
                         break;
                     default:
-                        attributesObj[attr.name] = attr.nodeValue;
+                        attributesObj[attrName] = attr.nodeValue;
                         break;
                 }
             })

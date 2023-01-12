@@ -155,6 +155,7 @@ const useFigma = () => {
                 }
 
                 responses = await Promise.all(promises);
+                console.log(responses)
                 for (let i = 0; i < responses.length; i++) {
                     images[guids[i]] = responses[i].replace('<svg ', '<svg preserveAspectRatio="none" ');
                 }
