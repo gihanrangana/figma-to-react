@@ -1,5 +1,5 @@
 # figma-to-react
-This repo includes how to import figma template directly to react project using figma api
+This is frontend tool to conver figma designs to react jsx elements using figma api
 
 # Demo
 
